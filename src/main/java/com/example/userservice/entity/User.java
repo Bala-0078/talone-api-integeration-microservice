@@ -3,9 +3,6 @@ package com.example.userservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * Entity representing a user in the loyalty rewards system.
- */
 @Entity
 @Table(name = "users")
 @Data
