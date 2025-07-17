@@ -7,13 +7,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class TalonOneConfig {
-    @Value("${talonone.base-url}")
+
+    @Value("${TalonOne.base-url}")
     private String talonOneBaseUrl;
+
+    @Value("${TalonOne.api-key}")
+    private String talonOneApiKey;
 
     @Bean
     public WebClient talonOneWebClient() {
         return WebClient.builder()
                 .baseUrl(talonOneBaseUrl)
+                .defaultHeader("Authorization", "ApiKey " + talonOneApiKey)
                 .build();
     }
 }
