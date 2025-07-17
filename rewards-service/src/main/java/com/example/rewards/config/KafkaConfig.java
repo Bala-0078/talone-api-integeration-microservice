@@ -13,6 +13,9 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Kafka configuration for order events listener.
+ */
 @EnableKafka
 @Configuration
 public class KafkaConfig {
