@@ -1,21 +1,30 @@
 package com.example.orderservice.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-
 import java.math.BigDecimal;
 
-@Data
+@Schema(description = "Cart item for order placement")
 public class CartItemDto {
-    @NotBlank
-    private String productId;
+    @NotNull
+    @Schema(description = "Product ID", example = "1001")
+    private Long productId;
 
     @NotNull
     @Min(1)
+    @Schema(description = "Quantity", example = "2")
     private Integer quantity;
 
     @NotNull
+    @Schema(description = "Price per item", example = "19.99")
     private BigDecimal price;
+
+    // Getters and setters
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 }
