@@ -1,0 +1,25 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: rewards-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: rewards-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+logging:
+  level:
+    root: INFO
+    com.example.rewards: DEBUG
+
+# Talon.One API configuration
+# Replace with your actual Talon.One API key and base URL
+
+talonone:
+  api-key: YOUR_TALONONE_API_KEY
+  base-url: https://YOUR_TALONONE_DOMAIN.talon.one
