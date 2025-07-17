@@ -1,27 +1,49 @@
 package com.example.rewards.service;
 
 import com.example.rewards.model.OrderEvent;
+import com.example.rewards.model.TalonOneSessionRequest;
+import com.example.rewards.model.RewardResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+/**
+ * Kafka listener for order events.
+ */
 @Service
-@Slf4j
-@RequiredArgsConstructor
 public class KafkaOrderListener {
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(KafkaOrderListener.class);
 
-    @KafkaListener(topics = "orders", groupId = "rewards-service-group")
-    public void listenOrderEvents(String message) {
+    @Autowired
+    private RewardsService rewardsService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    /**
+     * Listen to order events from Kafka and process rewards.
+     * Sample event log:
+     * {
+     *   "orderId": "ORD123",
+     *   "customerId": "12345",
+     *   "totalAmount": 100.0,
+     *   "items": [ { "sku": "SKU123", "quantity": 2, "price": 50.0 } ]
+     * }
+     */
+    @KafkaListener(topics = "order-events", groupId = "rewards-service")
+    public void listen(String message) {
         try {
-            OrderEvent event = objectMapper.readValue(message, OrderEvent.class);
-            log.info("Received order event: {}", event);
-            // TODO: Confirm loyalty actions based on event.loyaltyActions
-            // This could involve updating user profiles, calling Talon.One, etc.
-        } catch (Exception e) {
-            log.error("Failed to process order event: {}", e.getMessage());
+            OrderEvent orderEvent = objectMapper.readValue(message, OrderEvent.class);
+            logger.info("Received order event: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(orderEvent));
+            // Build TalonOneSessionRequest from orderEvent
+            TalonOneSessionRequest sessionRequest = TalonOneSessionRequest.fromOrderEvent(orderEvent);
+            RewardResponse response = rewardsService.evaluateCart(sessionRequest);
+            logger.info("Reward evaluation result for orderId {}: {}", orderEvent.getOrderId(), objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+        } catch (Exception ex) {
+            logger.error("Failed to process order event: {}", ex.getMessage(), ex);
         }
     }
 }
