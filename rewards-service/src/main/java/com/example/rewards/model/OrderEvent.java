@@ -1,38 +1,35 @@
 package com.example.rewards.model;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * Model representing an order event received from Kafka.
- */
+@Schema(description = "Order event received from Kafka")
 public class OrderEvent {
+    @Schema(description = "Unique order ID", example = "ORD123456")
     private String orderId;
+
+    @Schema(description = "Customer ID", example = "CUST789")
     private String customerId;
-    private double totalAmount;
-    private List<CartItem> items;
 
-    // Getters and setters
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
-    public String getCustomerId() { return customerId; }
-    public void setCustomerId(String customerId) { this.customerId = customerId; }
-    public double getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
-    public List<CartItem> getItems() { return items; }
-    public void setItems(List<CartItem> items) { this.items = items; }
+    @Schema(description = "Order total amount", example = "99.99")
+    private Double totalAmount;
 
-    /**
-     * Inner class representing a cart item.
-     */
-    public static class CartItem {
-        private String sku;
-        private int quantity;
-        private double price;
-        public String getSku() { return sku; }
-        public void setSku(String sku) { this.sku = sku; }
-        public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
-        public double getPrice() { return price; }
-        public void setPrice(double price) { this.price = price; }
+    // Getters and Setters
+    public String getOrderId() {
+        return orderId;
+    }
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+    public String getCustomerId() {
+        return customerId;
+    }
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+    public Double getTotalAmount() {
+        return totalAmount;
+    }
+    public void setTotalAmount(Double totalAmount) {
+        this.totalAmount = totalAmount;
     }
 }
