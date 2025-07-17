@@ -2,32 +2,30 @@ package com.example.rewards.service;
 
 import com.example.rewards.model.RewardResponse;
 import com.example.rewards.model.TalonOneSessionRequest;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
+/**
+ * Service for rewards business logic.
+ */
 @Service
-@RequiredArgsConstructor
 public class RewardsService {
-    private final TalonOneService talonOneService;
+    private static final Logger logger = LoggerFactory.getLogger(RewardsService.class);
 
-    public RewardResponse evaluateRewards(String userId, List<Map<String, Object>> cartItems, Double totalAmount) {
-        TalonOneSessionRequest sessionRequest = TalonOneSessionRequest.builder()
-                .integrationId(userId)
-                .cartItems(cartItems)
-                .totalAmount(totalAmount)
-                .build();
-        Map<String, Object> talonResponse = talonOneService.evaluateSession(sessionRequest);
-        // Parse discounts and rewards from Talon.One response
-        List<Map<String, Object>> discounts = (List<Map<String, Object>>) talonResponse.getOrDefault("discounts", Collections.emptyList());
-        List<Map<String, Object>> rewards = (List<Map<String, Object>>) talonResponse.getOrDefault("rewards", Collections.emptyList());
-        return RewardResponse.builder()
-                .userId(userId)
-                .discounts(discounts)
-                .rewards(rewards)
-                .build();
+    @Autowired
+    private TalonOneService talonOneService;
+
+    /**
+     * Evaluate cart and return rewards/discounts.
+     * @param sessionRequest TalonOneSessionRequest
+     * @return RewardResponse
+     */
+    public RewardResponse evaluateCart(TalonOneSessionRequest sessionRequest) {
+        logger.info("Evaluating cart for customerId: {}", sessionRequest.getCustomerId());
+        RewardResponse response = talonOneService.evaluateSession(sessionRequest);
+        // Additional business logic can be added here if needed
+        return response;
     }
 }
