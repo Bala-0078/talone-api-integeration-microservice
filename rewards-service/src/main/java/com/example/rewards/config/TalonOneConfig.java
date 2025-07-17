@@ -5,26 +5,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * Configuration for Talon.One API integration.
- */
 @Configuration
 @ConfigurationProperties(prefix = "talonone")
 public class TalonOneConfig {
-    /**
-     * Talon.One API base URL.
-     */
-    private String baseUrl;
-    /**
-     * Talon.One API key.
-     */
+    private String apiUrl;
     private String apiKey;
+    private String applicationId;
 
-    public String getBaseUrl() {
-        return baseUrl;
+    public String getApiUrl() {
+        return apiUrl;
     }
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public void setApiUrl(String apiUrl) {
+        this.apiUrl = apiUrl;
     }
     public String getApiKey() {
         return apiKey;
@@ -32,9 +24,15 @@ public class TalonOneConfig {
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
+    public String getApplicationId() {
+        return applicationId;
+    }
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
+    }
 
     @Bean
-    public RestTemplate talonOneRestTemplate() {
+    public RestTemplate restTemplate() {
         return new RestTemplate();
     }
 }
