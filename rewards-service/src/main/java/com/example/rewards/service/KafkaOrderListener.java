@@ -1,49 +1,42 @@
 package com.example.rewards.service;
 
 import com.example.rewards.model.OrderEvent;
-import com.example.rewards.model.TalonOneSessionRequest;
-import com.example.rewards.model.RewardResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-/**
- * Kafka listener for order events.
- */
+import java.util.HashSet;
+import java.util.Set;
+
 @Service
 public class KafkaOrderListener {
     private static final Logger logger = LoggerFactory.getLogger(KafkaOrderListener.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Simple in-memory idempotency store; replace with Redis/DB in production
+    private final Set<String> processedOrderIds = new HashSet<>();
 
-    @Autowired
-    private RewardsService rewardsService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    /**
-     * Listen to order events from Kafka and process rewards.
-     * Sample event log:
-     * {
-     *   "orderId": "ORD123",
-     *   "customerId": "12345",
-     *   "totalAmount": 100.0,
-     *   "items": [ { "sku": "SKU123", "quantity": 2, "price": 50.0 } ]
-     * }
-     */
-    @KafkaListener(topics = "order-events", groupId = "rewards-service")
-    public void listen(String message) {
+    @KafkaListener(topics = "order-events", groupId = "rewards-service-group")
+    public void listen(ConsumerRecord<String, String> record) {
         try {
-            OrderEvent orderEvent = objectMapper.readValue(message, OrderEvent.class);
-            logger.info("Received order event: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(orderEvent));
-            // Build TalonOneSessionRequest from orderEvent
-            TalonOneSessionRequest sessionRequest = TalonOneSessionRequest.fromOrderEvent(orderEvent);
-            RewardResponse response = rewardsService.evaluateCart(sessionRequest);
-            logger.info("Reward evaluation result for orderId {}: {}", orderEvent.getOrderId(), objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response));
+            OrderEvent orderEvent = objectMapper.readValue(record.value(), OrderEvent.class);
+            if (orderEvent.getOrderId() == null) {
+                logger.warn("Received order event with null orderId: {}", record.value());
+                return;
+            }
+            if (processedOrderIds.contains(orderEvent.getOrderId())) {
+                logger.info("Duplicate order event received for orderId={}, skipping.", orderEvent.getOrderId());
+                return;
+            }
+            processedOrderIds.add(orderEvent.getOrderId());
+            // Confirm loyalty actions (stubbed)
+            logger.info("Processing order event: orderId={}, customerId={}, totalAmount={}",
+                    orderEvent.getOrderId(), orderEvent.getCustomerId(), orderEvent.getTotalAmount());
+            // TODO: Integrate with Talon.One for loyalty confirmation if required
         } catch (Exception ex) {
-            logger.error("Failed to process order event: {}", ex.getMessage(), ex);
+            logger.error("Failed to process order event from Kafka: {}", record.value(), ex);
         }
     }
 }
