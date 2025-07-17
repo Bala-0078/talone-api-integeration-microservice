@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 8082
 
 spring:
   application:
@@ -11,6 +11,8 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      missing-topics-fatal: false
 
 logging:
   level:
@@ -18,8 +20,15 @@ logging:
     com.example.rewards: DEBUG
 
 # Talon.One API configuration
-# Replace with your actual Talon.One API key and base URL
-
-talonone:
+TalonOne:
+  base-url: https://api.talon.one/v1
   api-key: YOUR_TALONONE_API_KEY
-  base-url: https://YOUR_TALONONE_DOMAIN.talon.one
+  application-id: YOUR_TALONONE_APPLICATION_ID
+  loyalty-program-id: YOUR_TALONONE_LOYALTY_PROGRAM_ID
+
+# Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
