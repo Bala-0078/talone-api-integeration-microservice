@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 8083
 
 spring:
   application:
@@ -10,25 +10,15 @@ spring:
       group-id: rewards-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    listener:
-      missing-topics-fatal: false
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
 
 logging:
   level:
     root: INFO
     com.example.rewards: DEBUG
 
-# Talon.One API configuration
-TalonOne:
-  base-url: https://api.talon.one/v1
-  api-key: YOUR_TALONONE_API_KEY
-  application-id: YOUR_TALONONE_APPLICATION_ID
-  loyalty-program-id: YOUR_TALONONE_LOYALTY_PROGRAM_ID
-
-# Swagger/OpenAPI
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
+talonone:
+  apiKey: "YOUR_TALONONE_API_KEY"
+  baseUrl: "https://YOUR_TALONONE_DOMAIN.talon.one"
