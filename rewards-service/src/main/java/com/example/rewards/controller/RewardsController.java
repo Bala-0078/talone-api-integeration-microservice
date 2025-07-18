@@ -1,44 +1,41 @@
 package com.example.rewards.controller;
 
 import com.example.rewards.model.RewardResponse;
-import com.example.rewards.model.TalonOneSessionRequest;
 import com.example.rewards.service.RewardsService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/rewards")
+@Tag(name = "Rewards", description = "Endpoints for evaluating discounts and managing rewards.")
+@Validated
 public class RewardsController {
-
-    private final RewardsService rewardsService;
-
     @Autowired
-    public RewardsController(RewardsService rewardsService) {
-        this.rewardsService = rewardsService;
+    private RewardsService rewardsService;
+
+    @Operation(summary = "Evaluate cart session", description = "Evaluates the cart session and returns applicable discounts and rewards.")
+    @PostMapping(value = "/evaluate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RewardResponse> evaluateCart(@Valid @RequestBody CartRequest request) {
+        RewardResponse response = rewardsService.evaluateCart(request.getUserId(), request.getCartItems());
+        return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Evaluate rewards and discounts for a cart", description = "Evaluates the current cart for personalized discounts and rewards using Talon.One.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Rewards evaluated successfully", content = @Content(schema = @Schema(implementation = RewardResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
-    })
-    @PostMapping("/evaluate")
-    public ResponseEntity<RewardResponse> evaluateRewards(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Cart and customer data for evaluation",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = TalonOneSessionRequest.class))
-            )
-            @RequestBody TalonOneSessionRequest request) {
-        RewardResponse response = rewardsService.evaluateRewards(request);
-        return ResponseEntity.ok(response);
+    public static class CartRequest {
+        @NotBlank
+        private String userId;
+        private List<Map<String, Object>> cartItems;
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public List<Map<String, Object>> getCartItems() { return cartItems; }
+        public void setCartItems(List<Map<String, Object>> cartItems) { this.cartItems = cartItems; }
     }
 }
