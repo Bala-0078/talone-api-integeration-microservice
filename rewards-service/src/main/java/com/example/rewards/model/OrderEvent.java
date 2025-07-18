@@ -1,35 +1,30 @@
 package com.example.rewards.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 
-@Schema(description = "Order event received from Kafka")
 public class OrderEvent {
-    @Schema(description = "Unique order ID", example = "ORD123456")
+    private String eventType;
     private String orderId;
+    private String userId;
+    private List<LoyaltyAction> loyaltyActions;
 
-    @Schema(description = "Customer ID", example = "CUST789")
-    private String customerId;
+    public static class LoyaltyAction {
+        private String actionType;
+        private int points;
+        // Getters and setters
+        public String getActionType() { return actionType; }
+        public void setActionType(String actionType) { this.actionType = actionType; }
+        public int getPoints() { return points; }
+        public void setPoints(int points) { this.points = points; }
+    }
 
-    @Schema(description = "Order total amount", example = "99.99")
-    private Double totalAmount;
-
-    // Getters and Setters
-    public String getOrderId() {
-        return orderId;
-    }
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-    public String getCustomerId() {
-        return customerId;
-    }
-    public void setCustomerId(String customerId) {
-        this.customerId = customerId;
-    }
-    public Double getTotalAmount() {
-        return totalAmount;
-    }
-    public void setTotalAmount(Double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    // Getters and setters
+    public String getEventType() { return eventType; }
+    public void setEventType(String eventType) { this.eventType = eventType; }
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public List<LoyaltyAction> getLoyaltyActions() { return loyaltyActions; }
+    public void setLoyaltyActions(List<LoyaltyAction> loyaltyActions) { this.loyaltyActions = loyaltyActions; }
 }
