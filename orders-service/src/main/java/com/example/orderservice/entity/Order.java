@@ -19,18 +19,35 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(nullable = false)
     private Long userId;
 
-    @Column(name = "cart_items", nullable = false, columnDefinition = "jsonb")
-    private String cartItems;
-
-    @Column(name = "total_amount", nullable = false)
+    @Column(nullable = false)
     private BigDecimal totalAmount;
 
-    @Column(name = "discount", nullable = false)
+    @Column(nullable = false)
     private BigDecimal discount;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(nullable = false)
+    private BigDecimal finalAmount;
+
+    @Column(nullable = false)
+    private String status;
+
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+        updatedAt = createdAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
