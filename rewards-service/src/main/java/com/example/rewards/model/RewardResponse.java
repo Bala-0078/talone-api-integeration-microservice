@@ -1,36 +1,34 @@
 package com.example.rewards.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-@Schema(description = "Response containing evaluated rewards and discounts")
 public class RewardResponse {
-    @Schema(description = "Total discount applied", example = "10.50")
-    private Double totalDiscount;
+    private String userId;
+    private List<Discount> discounts;
+    private List<Reward> rewards;
 
-    @Schema(description = "List of applied rewards/discounts")
-    private List<String> appliedRewards;
+    public static class Discount {
+        private String campaignId;
+        private double discountAmount;
+        public String getCampaignId() { return campaignId; }
+        public void setCampaignId(String campaignId) { this.campaignId = campaignId; }
+        public double getDiscountAmount() { return discountAmount; }
+        public void setDiscountAmount(double discountAmount) { this.discountAmount = discountAmount; }
+    }
 
-    @Schema(description = "Loyalty points awarded", example = "100")
-    private Integer loyaltyPoints;
+    public static class Reward {
+        private String rewardType;
+        private int points;
+        public String getRewardType() { return rewardType; }
+        public void setRewardType(String rewardType) { this.rewardType = rewardType; }
+        public int getPoints() { return points; }
+        public void setPoints(int points) { this.points = points; }
+    }
 
-    // Getters and Setters
-    public Double getTotalDiscount() {
-        return totalDiscount;
-    }
-    public void setTotalDiscount(Double totalDiscount) {
-        this.totalDiscount = totalDiscount;
-    }
-    public List<String> getAppliedRewards() {
-        return appliedRewards;
-    }
-    public void setAppliedRewards(List<String> appliedRewards) {
-        this.appliedRewards = appliedRewards;
-    }
-    public Integer getLoyaltyPoints() {
-        return loyaltyPoints;
-    }
-    public void setLoyaltyPoints(Integer loyaltyPoints) {
-        this.loyaltyPoints = loyaltyPoints;
-    }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public List<Discount> getDiscounts() { return discounts; }
+    public void setDiscounts(List<Discount> discounts) { this.discounts = discounts; }
+    public List<Reward> getRewards() { return rewards; }
+    public void setRewards(List<Reward> rewards) { this.rewards = rewards; }
 }
