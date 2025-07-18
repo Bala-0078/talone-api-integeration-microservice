@@ -1,11 +1,9 @@
-server:
-  port: 8080
-
+# Spring Boot Application Configuration
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/userdb
-    username: postgres
-    password: yourpassword
+    username: user
+    password: password
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -13,9 +11,13 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+server:
+  port: 8080
 
-talonone:
-  api:
-    url: https://api.talon.one
-    key: your-talonone-api-key
+# Talon.One Integration
+# Replace with actual API key and endpoint
+app:
+  talonone:
+    apiKey: "YOUR_TALONONE_API_KEY"
+    baseUrl: "https://YOUR_TALONONE_DOMAIN.talon.one/v1"
