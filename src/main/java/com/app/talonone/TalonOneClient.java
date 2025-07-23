@@ -1,200 +1,119 @@
-package com.app.talonone;
+package talonone;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
-import com.app.dto.ProfileDTO;
-import com.app.dto.SessionDTO;
-import com.app.dto.RewardsResponse;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * TalonOneClient is a reusable, centralized client for interacting with the Talon.One Integration API.
- * It handles HTTP communication, authentication headers, and provides methods for updating user profiles,
- * evaluating sessions for rewards, and confirming loyalty points.
- *
- * <p>Configuration:
- * <ul>
- *     <li>talonone.base-url - The base URL for the Talon.One API (set in application.properties)</li>
- *     <li>talonone.api-key - The API key for authenticating requests (set in application.properties)</li>
- * </ul>
- *
- * <p>Usage:
- * <pre>
- *     {@code
- *     @Autowired
- *     private TalonOneClient talonOneClient;
- *     
- *     talonOneClient.updateProfile("user123", profileDto);
- *     RewardsResponse response = talonOneClient.evaluateSession(sessionDto);
- *     talonOneClient.confirmLoyalty("user123", 150.0);
- *     }
- * </pre>
+ * TalonOneClient is a reusable and centralized client for interacting with Talon.One's Integration API.
+ * It provides methods to update customer profiles, evaluate sessions for rewards, and confirm loyalty points.
+ * <p>
+ * Configuration:
+ * - talonone.base-url: The base URL for Talon.One Integration API (e.g., https://yourbaseurl.talon.one)
+ * - talonone.api-key: The API key for authenticating requests (should be prefixed with "ApiKey-v1 ")
+ * <p>
+ * Usage:
+ * Inject this component where needed and call its methods to interact with Talon.One.
  */
 @Component
 public class TalonOneClient {
 
-    private final WebClient webClient;
-    private final String baseUrl;
-    private final String apiKey;
+    @Value("${talonone.base-url}")
+    private String baseUrl;
 
-    /**
-     * Constructs a TalonOneClient with injected configuration.
-     *
-     * @param baseUrl the base URL for the Talon.One API
-     * @param apiKey the API key for authentication
-     */
-    public TalonOneClient(
-            @Value("${talonone.base-url}") String baseUrl,
-            @Value("${talonone.api-key}") String apiKey
-    ) {
-        this.baseUrl = baseUrl;
-        this.apiKey = apiKey;
-        this.webClient = WebClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
+    @Value("${talonone.api-key}")
+    private String apiKey;
+
+    private final RestTemplate restTemplate;
+
+    public TalonOneClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     /**
-     * Updates a user profile in Talon.One.
+     * Updates or creates a customer profile in Talon.One.
      *
-     * @param userId the unique identifier of the user
-     * @param dto the profile data to update
-     * @throws TalonOneClientException if the API call fails
+     * @param userId The integration ID of the user (customer profile).
+     * @param dto    The profile data to update (ProfileDTO should map to Talon.One's CustomerProfileIntegrationRequestV2).
+     * @throws RestClientException if the request fails.
      */
     public void updateProfile(String userId, ProfileDTO dto) {
+        String url = String.format("%s/v2/customer_profiles/%s", baseUrl, userId);
+        HttpHeaders headers = createHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ProfileDTO> entity = new HttpEntity<>(dto, headers);
+
         try {
-            webClient.put()
-                    .uri("/v1/profiles/{userId}", userId)
-                    .bodyValue(dto)
-                    .retrieve()
-                    .onStatus(HttpStatus::isError, response ->
-                            response.bodyToMono(String.class)
-                                    .defaultIfEmpty("Unknown error")
-                                    .flatMap(msg -> Mono.error(new TalonOneClientException(
-                                            "Failed to update profile: " + msg,
-                                            response.statusCode().value()
-                                    )))
-                    )
-                    .toBodilessEntity()
-                    .block();
-        } catch (WebClientResponseException ex) {
-            throw new TalonOneClientException("Failed to update profile: " + ex.getResponseBodyAsString(), ex.getRawStatusCode(), ex);
-        } catch (Exception ex) {
-            throw new TalonOneClientException("Unexpected error updating profile", ex);
+            restTemplate.exchange(url, HttpMethod.PUT, entity, Void.class);
+        } catch (RestClientException ex) {
+            // You may want to log or handle specific exceptions here
+            throw ex;
         }
     }
 
     /**
-     * Evaluates a session for rewards and discounts in Talon.One.
+     * Evaluates a session (cart) in Talon.One for rewards and discounts.
      *
-     * @param dto the session data to evaluate
-     * @return RewardsResponse containing applicable rewards and discounts
-     * @throws TalonOneClientException if the API call fails
+     * @param dto The session data (SessionDTO should map to Talon.One's IntegrationRequest).
+     * @return RewardsResponse containing discounts and applied rewards.
+     * @throws RestClientException if the request fails.
      */
     public RewardsResponse evaluateSession(SessionDTO dto) {
+        String url = String.format("%s/v2/customer_sessions/%s", baseUrl, dto.getSessionId());
+        HttpHeaders headers = createHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Wrap dto in IntegrationRequest if needed, or send dto directly if compatible
+        HttpEntity<SessionDTO> entity = new HttpEntity<>(dto, headers);
+
         try {
-            return webClient.post()
-                    .uri("/v1/sessions")
-                    .bodyValue(dto)
-                    .retrieve()
-                    .onStatus(HttpStatus::isError, response ->
-                            response.bodyToMono(String.class)
-                                    .defaultIfEmpty("Unknown error")
-                                    .flatMap(msg -> Mono.error(new TalonOneClientException(
-                                            "Failed to evaluate session: " + msg,
-                                            response.statusCode().value()
-                                    )))
-                    )
-                    .bodyToMono(RewardsResponse.class)
-                    .block();
-        } catch (WebClientResponseException ex) {
-            throw new TalonOneClientException("Failed to evaluate session: " + ex.getResponseBodyAsString(), ex.getRawStatusCode(), ex);
-        } catch (Exception ex) {
-            throw new TalonOneClientException("Unexpected error evaluating session", ex);
+            ResponseEntity<RewardsResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    entity,
+                    RewardsResponse.class
+            );
+            return response.getBody();
+        } catch (RestClientException ex) {
+            // You may want to log or handle specific exceptions here
+            throw ex;
         }
     }
 
     /**
-     * Confirms loyalty point usage for a user after order placement in Talon.One.
+     * Confirms loyalty point usage for a user after order placement.
      *
-     * @param userId the unique identifier of the user
-     * @param totalAmount the total order amount to confirm
-     * @throws TalonOneClientException if the API call fails
+     * @param userId      The integration ID of the user (customer profile).
+     * @param totalAmount The total amount spent (should be wrapped as needed for Talon.One).
+     * @throws RestClientException if the request fails.
      */
     public void confirmLoyalty(String userId, double totalAmount) {
+        String url = String.format("%s/v1/loyalty/%s/confirm", baseUrl, userId);
+        HttpHeaders headers = createHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // If Talon.One expects a JSON body with the amount, wrap it accordingly
+        HttpEntity<Double> entity = new HttpEntity<>(totalAmount, headers);
+
         try {
-            webClient.post()
-                    .uri("/v1/loyalty/{userId}/confirm", userId)
-                    .bodyValue(new LoyaltyConfirmRequest(totalAmount))
-                    .retrieve()
-                    .onStatus(HttpStatus::isError, response ->
-                            response.bodyToMono(String.class)
-                                    .defaultIfEmpty("Unknown error")
-                                    .flatMap(msg -> Mono.error(new TalonOneClientException(
-                                            "Failed to confirm loyalty: " + msg,
-                                            response.statusCode().value()
-                                    )))
-                    )
-                    .toBodilessEntity()
-                    .block();
-        } catch (WebClientResponseException ex) {
-            throw new TalonOneClientException("Failed to confirm loyalty: " + ex.getResponseBodyAsString(), ex.getRawStatusCode(), ex);
-        } catch (Exception ex) {
-            throw new TalonOneClientException("Unexpected error confirming loyalty", ex);
+            restTemplate.postForLocation(url, entity);
+        } catch (RestClientException ex) {
+            // You may want to log or handle specific exceptions here
+            throw ex;
         }
     }
 
     /**
-     * Exception class for TalonOneClient errors.
+     * Creates HTTP headers with the Authorization header set for Talon.One.
+     *
+     * @return HttpHeaders with Authorization set.
      */
-    public static class TalonOneClientException extends RuntimeException {
-        private final int statusCode;
-
-        public TalonOneClientException(String message) {
-            super(message);
-            this.statusCode = -1;
-        }
-
-        public TalonOneClientException(String message, int statusCode) {
-            super(message);
-            this.statusCode = statusCode;
-        }
-
-        public TalonOneClientException(String message, Throwable cause) {
-            super(message, cause);
-            this.statusCode = -1;
-        }
-
-        public TalonOneClientException(String message, int statusCode, Throwable cause) {
-            super(message, cause);
-            this.statusCode = statusCode;
-        }
-
-        public int getStatusCode() {
-            return statusCode;
-        }
-    }
-
-    /**
-     * Internal DTO for loyalty confirmation requests.
-     * Adjust the field name if Talon.One expects a different structure.
-     */
-    private static class LoyaltyConfirmRequest {
-        private final double totalAmount;
-
-        public LoyaltyConfirmRequest(double totalAmount) {
-            this.totalAmount = totalAmount;
-        }
-
-        public double getTotalAmount() {
-            return totalAmount;
-        }
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "ApiKey-v1 " + apiKey);
+        return headers;
     }
 }
