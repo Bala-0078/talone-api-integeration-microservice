@@ -1,51 +1,53 @@
-# Java Project Structure
+# Employee Management System
 
-## Project Description
-This repository contains a Java-based application with a layered architecture. The project is organized into the following layers:
-- **Controller Layer:** Handles HTTP requests.
-- **Service Layer:** Contains business logic.
-- **TalonOne Client Layer:** Manages external API interactions.
-- **Model Layer:** Defines data structures.
-- **Repository Layer:** Handles database operations.
-- **Config Layer:** Contains configuration files.
-- **Resource Layer:** Includes application properties.
+This is a Spring Boot application for managing employees, including basic CRUD operations and secured REST endpoints.
 
-## Directory Structure
-```
-src/
-├── main/java/com/app/
-│   ├── AppApplication.java
-│   ├── controller/
-│   │   ├── UserController.java
-│   │   ├── OrderController.java
-│   │   └── RewardsController.java
-│   ├── service/
-│   │   ├── UserService.java
-│   │   ├── OrderService.java
-│   │   └── RewardsService.java
-│   ├── talonone/
-│   │   └── TalonOneClient.java
-│   ├── model/
-│   │   ├── User.java
-│   │   ├── Order.java
-│   │   ├── Item.java
-│   │   ├── OrderRequest.java
-│   │   ├── CartRequest.java
-│   │   ├── ItemDTO.java
-│   │   ├── RewardsResponse.java
-│   │   ├── ProfileDTO.java
-│   │   └── SessionDTO.java
-│   ├── repository/
-│   │   ├── UserRepository.java
-│   │   └── OrderRepository.java
-│   └── config/
-│       └── RestTemplateConfig.java
-└── resources/
-    └── application.properties
-```
+## Features
+- REST API for managing employees
+- In-memory H2 database
+- Spring Data JPA for persistence
+- HTTP Basic authentication with role-based access
+- H2 console enabled for database inspection
 
-## How to Build and Run
-1. Clone the repository: `git clone https://github.com/Bala-0078/talone-api-integeration-microservice.git`
-2. Navigate to the project directory: `cd talone-api-integeration-microservice`
-3. Build the project using Maven: `mvn clean install`
-4. Run the application: `java -jar target/<application_name>.jar`
+## Prerequisites
+- Java 17 or higher
+- Maven 3.6+
+
+## Setup & Run
+1. Clone the repository:
+   ```
+   git clone https://github.com/Bala-0078/talone-api-integeration-microservice.git
+   cd talone-api-integeration-microservice
+   ```
+2. Build the project:
+   ```
+   mvn clean package
+   ```
+3. Run the application:
+   ```
+   mvn spring-boot:run
+   ```
+   or
+   ```
+   java -jar target/employeemanagement-0.0.1-SNAPSHOT.jar
+   ```
+
+## API Endpoints
+- `GET /employees` - Retrieve all employees (Requires ADMIN role)
+- `POST /employees` - Add a new employee (Requires ADMIN role)
+
+## Authentication
+- Username: `admin`
+- Password: `admin123`
+
+## H2 Database Console
+- URL: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
+- JDBC URL: `jdbc:h2:mem:testdb`
+- Username: `sa`
+- Password: `password`
+
+## Packaging
+The application is packaged as a runnable JAR file in the `target` directory after building.
+
+## License
+MIT
