@@ -1,0 +1,32 @@
+{
+  "ApplicationName": "EmployeeManagementSystem",
+  "PackageStructure": "com.example.employeemanagement",
+  "Dependencies": [
+    "Spring Web",
+    "Spring Data JPA",
+    "H2 Database",
+    "Spring Security"
+  ],
+  "RestEndpoints": [
+    {
+      "Method": "GET",
+      "Path": "/employees",
+      "Description": "Retrieve all employees"
+    },
+    {
+      "Method": "POST",
+      "Path": "/employees",
+      "Description": "Add a new employee"
+    }
+  ],
+  "DatabaseConfigurations": {
+    "DatabaseType": "H2",
+    "URL": "jdbc:h2:mem:testdb",
+    "Username": "sa",
+    "Password": "password"
+  },
+  "SecurityFeatures": {
+    "Authentication": "Basic",
+    "Authorization": "Role-based"
+  }
+}
