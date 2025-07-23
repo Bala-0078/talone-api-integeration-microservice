@@ -1,16 +1,15 @@
 package com.app.service;
 
 import com.app.model.User;
-import com.app.model.Order;
+import com.app.model.ProfileDTO;
 import com.app.repository.UserRepository;
 lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
 
 /**
- * Service layer for managing user-related operations.
- * Handles fetching user details and updating user statistics.
+ * Service for user-related business logic.
  */
 @Service
 @RequiredArgsConstructor
@@ -19,41 +18,25 @@ public class UserService {
     private final UserRepository userRepository;
 
     /**
-     * Fetches a user by their unique identifier.
-     *
-     * @param id the user ID
-     * @return the User entity if found
-     * @throws IllegalArgumentException if user is not found
+     * Fetch user details by ID.
+     * @param id User ID
+     * @return User entity
+     * @throws EntityNotFoundException if user not found
      */
-    public User getUser(String id) {
+    public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User with id " + id + " not found."));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
     }
 
     /**
-     * Updates user statistics such as total orders and total spent.
-     * This method should be called after an order is placed.
-     *
-     * @param user the user entity to update
-     * @return the updated User entity
+     * Update user's totalOrders and totalSpent statistics.
+     * @param id User ID
+     * @param profileDTO DTO containing updated stats
      */
-    public User save(User user) {
-        // Update user statistics logic here if needed before saving
-        return userRepository.save(user);
-    }
-
-    /**
-     * Updates user statistics based on a new order.
-     * Increments totalOrders and adds to totalSpent.
-     *
-     * @param userId the user ID
-     * @param order the order to use for updating statistics
-     * @return the updated User entity
-     */
-    public User updateUserStatistics(String userId, Order order) {
-        User user = getUser(userId);
-        user.setTotalOrders(user.getTotalOrders() + 1);
-        user.setTotalSpent(user.getTotalSpent() + order.getTotal());
-        return userRepository.save(user);
+    public void updateUserStats(Long id, ProfileDTO profileDTO) {
+        User user = getUserById(id);
+        user.setTotalOrders(profileDTO.getTotalOrders());
+        user.setTotalSpent(profileDTO.getTotalSpent());
+        userRepository.save(user);
     }
 }
