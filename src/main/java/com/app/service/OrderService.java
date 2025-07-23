@@ -1,7 +1,6 @@
 package com.app.service;
 
 import com.app.model.Order;
-import com.app.model.User;
 import com.app.model.OrderRequest;
 import com.app.model.CartRequest;
 import com.app.model.RewardsResponse;
@@ -9,9 +8,10 @@ import com.app.repository.OrderRepository;
 lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
+
 /**
- * Service layer for handling order processing logic.
- * Responsible for placing orders, applying discounts, and updating user stats.
+ * Service for order-related business logic.
  */
 @Service
 @RequiredArgsConstructor
@@ -22,53 +22,42 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
     /**
-     * Places an order for a user, evaluates discounts, saves the order,
-     * updates user statistics, and confirms loyalty point usage.
-     *
-     * @param req the order request payload
-     * @return the created Order entity
+     * Places a new order, evaluates rewards, applies discounts, saves order, and updates user stats.
+     * @param orderRequest The order request payload
+     * @param rewardsResponse The evaluated rewards for the order/cart
+     * @return The created Order entity
      */
-    public Order placeOrder(OrderRequest req) {
-        // 1. Retrieve user
-        User user = userService.getUser(req.getUserId());
+    public Order placeOrder(OrderRequest orderRequest, RewardsResponse rewardsResponse) {
+        // Retrieve user
+        Long userId = orderRequest.getUserId();
+        var user = userService.getUserById(userId);
 
-        // 2. Evaluate discounts/rewards
-        CartRequest cartRequest = new CartRequest(req.getUserId(), req.getItems());
-        RewardsResponse rewards = rewardsService.evaluateCart(cartRequest);
+        // Evaluate cart and apply rewards (discounts, loyalty, etc.)
+        CartRequest cartRequest = orderRequest.getCartRequest();
+        // rewardsResponse is already provided by controller
 
-        // 3. Calculate final total after discounts
-        double discount = rewards.getTotalDiscount();
-        double originalTotal = req.getItems().stream().mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
+        // Calculate final total after applying discount
+        double originalTotal = cartRequest.getTotal();
+        double discount = rewardsResponse.getDiscountAmount();
         double finalTotal = Math.max(0, originalTotal - discount);
 
-        // 4. Create and save order
+        // Create and save order
         Order order = new Order();
-        order.setUserId(req.getUserId());
-        order.setItems(req.getItems());
-        order.setDiscount(discount);
+        order.setUserId(userId);
+        order.setItems(cartRequest.getItems());
         order.setTotal(finalTotal);
-        order.setStatus("PLACED");
-        Order savedOrder = orderRepository.save(order);
+        order.setDiscount(discount);
+        order.setRewardsApplied(rewardsResponse.getAppliedRewards());
+        orderRepository.save(order);
 
-        // 5. Update user statistics
+        // Update user stats (increment totalOrders, add to totalSpent)
         user.setTotalOrders(user.getTotalOrders() + 1);
         user.setTotalSpent(user.getTotalSpent() + finalTotal);
-        userService.save(user);
+        userService.updateUserStats(userId, user.toProfileDTO());
 
-        // 6. Confirm loyalty point usage if applicable
-        rewardsService.confirmLoyalty(req.getUserId(), finalTotal);
+        // Confirm loyalty point usage if applicable
+        rewardsService.confirmLoyalty(userId.toString(), finalTotal);
 
-        return savedOrder;
-    }
-
-    /**
-     * Saves an order entity directly.
-     * (For use cases where order is already constructed and discounts applied.)
-     *
-     * @param order the order to save
-     * @return the saved Order entity
-     */
-    public Order saveOrder(Order order) {
-        return orderRepository.save(order);
+        return order;
     }
 }
